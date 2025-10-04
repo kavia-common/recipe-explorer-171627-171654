@@ -8,6 +8,7 @@ import SidebarFilters from './components/layout/SidebarFilters';
 import RecipesGrid from './components/recipes/RecipesGrid';
 import RecipesList from './components/recipes/RecipesList';
 import RecipeDetailModal from './components/recipes/RecipeDetailModal';
+import DevBanner from './components/common/DevBanner';
 
 // State providers
 import { UIProvider, useUI } from './store/uiState';
@@ -85,6 +86,7 @@ function AppContent() {
 
   return (
     <div className="App app-layout">
+      <DevBanner />
       <Navbar onSearchChange={handleSearchChange} rightActions={rightActions} />
 
       <SidebarFilters onFilterChange={handleFilterChange} />
