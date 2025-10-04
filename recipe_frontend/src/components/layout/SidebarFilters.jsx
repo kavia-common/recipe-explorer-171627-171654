@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useUI } from '../../store/uiState';
+import filterIcon from '../../assets/icons/filter.svg';
 
 /**
  * SidebarFilters: Collapsible filter sidebar with common recipe filters.
@@ -39,12 +40,17 @@ export default function SidebarFilters({ onFilterChange }) {
     <aside className="sidebar" aria-label="Filters sidebar">
       <div className="section">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ margin: 0 }}>Filters</h3>
+          <h3 style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <img src={filterIcon} width={18} height={18} alt="" aria-hidden="true" />
+            Filters
+          </h3>
           <button
             className="btn ghost"
             onClick={handleToggle}
             aria-expanded={open}
             aria-controls="filters-panel"
+            aria-label={open ? 'Hide filters' : 'Show filters'}
+            title={open ? 'Hide filters' : 'Show filters'}
           >
             {open ? 'Hide' : 'Show'}
           </button>

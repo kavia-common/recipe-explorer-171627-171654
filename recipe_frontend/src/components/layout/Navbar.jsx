@@ -1,5 +1,6 @@
 import React from 'react';
 import { useUI } from '../../store/uiState';
+import searchIcon from '../../assets/icons/search.svg';
 
 /**
  * Navbar: Top navigation header for the Recipe Explorer.
@@ -45,22 +46,33 @@ export default function Navbar({ onSearchChange, rightActions }) {
         <span>Recipe Explorer</span>
       </div>
 
-      <div className="actions" role="search">
+      <div className="actions" role="search" aria-label="Search recipes">
         <label htmlFor="recipe-search" className="visually-hidden">
           Search recipes
         </label>
-        <input
-          id="recipe-search"
-          type="search"
-          className="input"
-          placeholder="Search recipes..."
-          value={immediateSearch}
-          onChange={handleChange}
-          aria-label="Search recipes"
-        />
+        <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+          <img
+            src={searchIcon}
+            alt=""
+            aria-hidden="true"
+            width={18}
+            height={18}
+            style={{ position: 'absolute', left: 10, opacity: 0.7 }}
+          />
+          <input
+            id="recipe-search"
+            type="search"
+            className="input"
+            placeholder="Search recipes..."
+            value={immediateSearch}
+            onChange={handleChange}
+            aria-label="Search recipes"
+            style={{ paddingLeft: 36 }}
+          />
+        </div>
         {/* Right side actions injected from parent (e.g., theme toggle button) */}
         {rightActions}
-        <a className="btn ghost" href="#saved" aria-label="View saved recipes">
+        <a className="btn ghost" href="#saved" aria-label="View saved recipes" title="View saved recipes">
           Saved
         </a>
       </div>

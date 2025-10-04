@@ -117,7 +117,7 @@ function AppContent() {
                 aria-label="Grid view"
                 title="Grid view"
               >
-                ⬛⬛
+                Grid
               </button>
               <button
                 className="btn ghost"
@@ -126,7 +126,7 @@ function AppContent() {
                 aria-label="List view"
                 title="List view"
               >
-                ☰
+                List
               </button>
             </div>
           </div>

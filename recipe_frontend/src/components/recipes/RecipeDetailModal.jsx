@@ -1,5 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import Badge from '../common/Badge';
+import clockIcon from '../../assets/icons/clock.svg';
+import starIcon from '../../assets/icons/star.svg';
+import placeholderImg from '../../assets/placeholder.png';
 
 /**
  * RecipeDetailModal: Accessible modal dialog for viewing recipe details.
@@ -28,6 +31,7 @@ function getFocusable(container) {
 
 // PUBLIC_INTERFACE
 export default function RecipeDetailModal({ open, recipe, onClose }) {
+  /** Accessible modal for recipe details with image, time, rating, and sections. */
   const closeBtnRef = useRef(null);
   const dialogRef = useRef(null);
   const lastActiveRef = useRef(null);
@@ -123,6 +127,7 @@ export default function RecipeDetailModal({ open, recipe, onClose }) {
             className="btn ghost"
             onClick={onClose}
             aria-label="Close recipe details"
+            title="Close recipe details"
           >
             Close
           </button>
@@ -130,27 +135,23 @@ export default function RecipeDetailModal({ open, recipe, onClose }) {
 
         <div className="modal-body" id={descId}>
           <div style={{ position: 'relative', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginBottom: 16 }}>
-            {image ? (
-              <img src={image} alt={title} style={{ width: '100%', display: 'block' }} />
-            ) : (
-              <div
-                aria-hidden="true"
-                style={{
-                  width: '100%',
-                  aspectRatio: '16/9',
-                  display: 'grid',
-                  placeItems: 'center',
-                  background: '#eef2ff',
-                  color: 'var(--color-muted)',
-                  fontSize: 36,
-                }}
-              >
-                🍽️
-              </div>
-            )}
+            <img
+              src={image || placeholderImg}
+              alt={title}
+              style={{ width: '100%', display: 'block' }}
+              onError={(e) => {
+                e.currentTarget.src = placeholderImg;
+              }}
+            />
             <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 8 }}>
-              <Badge variant="secondary">⏱ {time} min</Badge>
-              <Badge>★ {rating}</Badge>
+              <Badge variant="secondary" title="Estimated time">
+                <img src={clockIcon} width={16} height={16} alt="" aria-hidden="true" style={{ marginRight: 6 }} />
+                {time} min
+              </Badge>
+              <Badge title={`Rating ${rating} out of 5`}>
+                <img src={starIcon} width={16} height={16} alt="" aria-hidden="true" style={{ marginRight: 6 }} />
+                {rating}
+              </Badge>
             </div>
           </div>
 
