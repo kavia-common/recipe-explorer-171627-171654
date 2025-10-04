@@ -1,4 +1,5 @@
 import React from 'react';
+import { useUI } from '../../store/uiState';
 
 /**
  * Navbar: Top navigation header for the Recipe Explorer.
@@ -7,9 +8,17 @@ import React from 'react';
 
 // PUBLIC_INTERFACE
 export default function Navbar({ onSearchChange, rightActions }) {
-  /** Accessible search input change handler placeholder. */
+  const {
+    state: { immediateSearch },
+    actions: { setSearchQueryDebounced },
+  } = useUI();
+
   const handleChange = (e) => {
-    if (onSearchChange) onSearchChange(e.target.value);
+    const val = e.target.value;
+    // Update local debounced value in context
+    setSearchQueryDebounced(val);
+    // Also notify parent if provided (optional)
+    if (onSearchChange) onSearchChange(val);
   };
 
   return (
@@ -45,6 +54,7 @@ export default function Navbar({ onSearchChange, rightActions }) {
           type="search"
           className="input"
           placeholder="Search recipes..."
+          value={immediateSearch}
           onChange={handleChange}
           aria-label="Search recipes"
         />

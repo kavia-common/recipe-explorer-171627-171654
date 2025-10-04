@@ -9,73 +9,56 @@ import RecipesGrid from './components/recipes/RecipesGrid';
 import RecipesList from './components/recipes/RecipesList';
 import RecipeDetailModal from './components/recipes/RecipeDetailModal';
 
+// State providers
+import { UIProvider, useUI } from './store/uiState';
+import { RecipesProvider, useRecipes } from './store/recipesState';
+
 /**
  * Root App: Composes Navbar, SidebarFilters, list/grid content, and a detail modal.
  * - Uses Ocean Professional theme
  * - Accessible and responsive scaffold; no external deps
  */
 
-// PUBLIC_INTERFACE
-function App() {
-  /** Root theme state (light/dark). Provided for future expansion and accessibility. */
+// Internal component to consume contexts and render UI
+function AppContent() {
   const [theme, setTheme] = useState('light');
 
-  // Placeholder view state: 'grid' or 'list'
-  const [viewMode, setViewMode] = useState('grid');
+  const {
+    state: ui,
+    actions: { setSearchQueryDebounced, setFilters, setViewMode, openModal, resetSelection, closeModal },
+  } = useUI();
 
-  // Placeholder items for UI scaffolding
-  const [items] = useState([
-    {
-      id: 1,
-      title: 'Creamy Tomato Pasta',
-      time: 25,
-      rating: 4.3,
-      image: 'https://images.unsplash.com/photo-1523986371872-9d3ba2e2a389?q=80&w=1200&auto=format&fit=crop',
-      ingredients: ['Pasta', 'Tomatoes', 'Cream', 'Garlic', 'Basil'],
-      steps: ['Boil pasta', 'Cook sauce', 'Combine and serve'],
-    },
-    {
-      id: 2,
-      title: 'Avocado Toast Deluxe',
-      time: 10,
-      rating: 4.8,
-      image: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?q=80&w=1200&auto=format&fit=crop',
-      ingredients: ['Bread', 'Avocado', 'Lemon', 'Chili flakes'],
-      steps: ['Toast bread', 'Mash avocado', 'Assemble'],
-    },
-    {
-      id: 3,
-      title: 'Hearty Veggie Soup',
-      time: 40,
-      rating: 4.5,
-      image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1200&auto=format&fit=crop',
-      ingredients: ['Carrots', 'Celery', 'Onion', 'Broth', 'Noodles'],
-      steps: ['Chop veggies', 'Simmer broth', 'Add noodles'],
-    },
-  ]);
+  const {
+    state: recipes,
+    actions: { selectRecipe, resetSelection: resetRecipeSelection },
+  } = useRecipes();
 
-  // Selected recipe for the detail modal
-  const [selected, setSelected] = useState(null);
-
-  // Effect to apply theme to document element for global theming hooks
+  // Apply theme to document element
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
-  // PUBLIC_INTERFACE
-  const toggleTheme = () => {
-    setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
-  };
+  const toggleTheme = () => setTheme((t) => (t === 'light' ? 'dark' : 'light'));
 
-  // Handlers (placeholders)
+  // Handlers wired to contexts
   const handleSearchChange = (q) => {
-    // Placeholder for search handling
-    // console.log('Search query:', q);
+    setSearchQueryDebounced(q);
+  };
+  const handleFilterChange = (filters) => {
+    setFilters(filters);
   };
 
-  const handleFilterChange = (filters) => {
-    // Placeholder for filter handling
-    // console.log('Filters updated:', filters);
+  // Select a recipe: set selected in recipes state and open modal in UI state
+  const handleSelect = (item) => {
+    selectRecipe(item);
+    openModal(item?.id ?? null);
+  };
+
+  // Close modal: reset both UI selection and recipe selection
+  const handleModalClose = () => {
+    closeModal();
+    resetSelection();
+    resetRecipeSelection();
   };
 
   const rightActions = (
@@ -88,6 +71,17 @@ function App() {
       {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
     </button>
   );
+
+  // Simple client-side filter to visualize search impact on mock data
+  const normalizedQuery = ui.searchQuery.trim().toLowerCase();
+  const filteredItems = (recipes.items || []).filter((r) => {
+    const matchQuery =
+      !normalizedQuery ||
+      r.title?.toLowerCase().includes(normalizedQuery) ||
+      r.ingredients?.some((i) => i.toLowerCase().includes(normalizedQuery));
+    // For now, just demonstrate filters existence; detailed filtering logic will be implemented later.
+    return matchQuery;
+  });
 
   return (
     <div className="App app-layout">
@@ -116,7 +110,7 @@ function App() {
             <div style={{ display: 'flex', gap: 8 }}>
               <button
                 className="btn ghost"
-                aria-pressed={viewMode === 'grid'}
+                aria-pressed={ui.viewMode === 'grid'}
                 onClick={() => setViewMode('grid')}
                 aria-label="Grid view"
                 title="Grid view"
@@ -125,7 +119,7 @@ function App() {
               </button>
               <button
                 className="btn ghost"
-                aria-pressed={viewMode === 'list'}
+                aria-pressed={ui.viewMode === 'list'}
                 onClick={() => setViewMode('list')}
                 aria-label="List view"
                 title="List view"
@@ -136,17 +130,29 @@ function App() {
           </div>
 
           {/* Content list */}
-          {viewMode === 'grid' ? (
-            <RecipesGrid items={items} onSelect={setSelected} />
+          {ui.viewMode === 'grid' ? (
+            <RecipesGrid items={filteredItems} onSelect={handleSelect} />
           ) : (
-            <RecipesList items={items} onSelect={setSelected} />
+            <RecipesList items={filteredItems} onSelect={handleSelect} />
           )}
         </div>
       </main>
 
       {/* Modal container */}
-      <RecipeDetailModal open={!!selected} recipe={selected} onClose={() => setSelected(null)} />
+      <RecipeDetailModal open={ui.isModalOpen && !!recipes.selectedRecipe} recipe={recipes.selectedRecipe} onClose={handleModalClose} />
     </div>
+  );
+}
+
+// PUBLIC_INTERFACE
+function App() {
+  /** Entry component: wraps providers around AppContent. */
+  return (
+    <UIProvider>
+      <RecipesProvider>
+        <AppContent />
+      </RecipesProvider>
+    </UIProvider>
   );
 }
 

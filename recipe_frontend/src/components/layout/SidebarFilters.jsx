@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useUI } from '../../store/uiState';
 
 /**
  * SidebarFilters: Collapsible filter sidebar with common recipe filters.
@@ -19,11 +20,18 @@ export default function SidebarFilters({ onFilterChange }) {
   const [open, setOpen] = useState(true);
   const [filters, setFilters] = useState(initialFilters);
 
+  const {
+    actions: { setFilters: setFiltersInStore },
+  } = useUI();
+
   const handleToggle = () => setOpen(!open);
 
   const updateFilter = (key, value) => {
     const next = { ...filters, [key]: value };
     setFilters(next);
+    // Update UI store
+    setFiltersInStore(next);
+    // Optional callback
     if (onFilterChange) onFilterChange(next);
   };
 
@@ -154,12 +162,16 @@ export default function SidebarFilters({ onFilterChange }) {
               className="btn ghost"
               onClick={() => {
                 setFilters(initialFilters);
+                setFiltersInStore(initialFilters);
                 if (onFilterChange) onFilterChange(initialFilters);
               }}
             >
               Reset
             </button>
-            <button className="btn" onClick={() => onFilterChange && onFilterChange(filters)}>
+            <button className="btn" onClick={() => {
+              setFiltersInStore(filters);
+              onFilterChange && onFilterChange(filters);
+            }}>
               Apply
             </button>
           </div>
