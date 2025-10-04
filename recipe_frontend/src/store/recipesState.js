@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useMemo, useReducer } from 'react';
+import React, { createContext, useContext, useMemo, useReducer, useEffect } from 'react';
+import { listRecipes, getRecipe as apiGetRecipe } from '../api/recipes';
 
 /**
  * Recipes State store using React Context + Reducer.
@@ -9,7 +10,7 @@ import React, { createContext, useContext, useMemo, useReducer } from 'react';
 const RecipesStateContext = createContext(undefined);
 const RecipesDispatchContext = createContext(undefined);
 
-// Mock items for initial visualization
+// Mock items for initial visualization (also reused if API fails)
 const mockItems = [
   {
     id: 1,
@@ -41,7 +42,7 @@ const mockItems = [
 ];
 
 const initialRecipesState = {
-  items: mockItems,
+  items: mockItems, // Optimistic initial content; will be replaced by API/mock fetch
   loading: false,
   error: null,
   selectedRecipe: null,
@@ -74,7 +75,7 @@ function recipesReducer(state, action) {
 
 // PUBLIC_INTERFACE
 export function RecipesProvider({ children }) {
-  /** Provider for recipes list, loading, error, and current selection. */
+  /** Provider for recipes list, loading, error, and current selection. Auto-loads recipes. */
   const [state, dispatch] = useReducer(recipesReducer, initialRecipesState);
 
   const actions = useMemo(() => {
@@ -93,7 +94,50 @@ export function RecipesProvider({ children }) {
 
       // PUBLIC_INTERFACE
       resetSelection: () => dispatch({ type: types.RESET_SELECTION }),
+
+      // PUBLIC_INTERFACE
+      async refresh(params = {}) {
+        /** Fetch recipes list using API stubs (mock or real). */
+        dispatch({ type: types.SET_LOADING, payload: true });
+        try {
+          const items = await listRecipes(params);
+          dispatch({ type: types.SET_ITEMS, payload: items });
+        } catch (e) {
+          console.error('Failed to load recipes:', e);
+          dispatch({ type: types.SET_ERROR, payload: e?.message || 'Failed to load recipes' });
+          // Keep existing items (initial mock) to avoid empty UI
+          dispatch({ type: types.SET_LOADING, payload: false });
+        }
+      },
+
+      // PUBLIC_INTERFACE
+      async loadRecipeById(id) {
+        /** Fetches single recipe by id and sets it as selectedRecipe. */
+        if (!id) return;
+        dispatch({ type: types.SET_LOADING, payload: true });
+        try {
+          const one = await apiGetRecipe(id);
+          dispatch({ type: types.SELECT_RECIPE, payload: one });
+        } catch (e) {
+          console.error('Failed to load recipe:', e);
+          dispatch({ type: types.SET_ERROR, payload: e?.message || 'Failed to load recipe' });
+        } finally {
+          dispatch({ type: types.SET_LOADING, payload: false });
+        }
+      },
     };
+  }, []);
+
+  // Auto-initialize: fetch recipes on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        await actions.refresh();
+      } catch {
+        // Swallow errors; already handled inside refresh
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
