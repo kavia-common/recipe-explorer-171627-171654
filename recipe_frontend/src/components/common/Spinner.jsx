@@ -5,7 +5,7 @@ import React from 'react';
  */
 
 // PUBLIC_INTERFACE
-export default function Spinner({ size = 20, label = 'Loading' }) {
+export default function Spinner({ size = 20, label = 'Loading', 'aria-describedby': ariaDescribedBy }) {
   const style = {
     width: size,
     height: size,
@@ -16,8 +16,15 @@ export default function Spinner({ size = 20, label = 'Loading' }) {
   };
 
   return (
-    <div role="status" aria-live="polite" aria-label={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-      <span style={style} />
+    <div
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      aria-label={label}
+      aria-describedby={ariaDescribedBy}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
+    >
+      <span style={style} aria-hidden="true" />
       <span className="visually-hidden">{label}</span>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>

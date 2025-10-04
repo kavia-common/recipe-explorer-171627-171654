@@ -109,7 +109,7 @@ function AppContent() {
                 Browse delicious meals curated for you.
               </p>
             </div>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 8 }} role="group" aria-label="Toggle results layout">
               <button
                 className="btn ghost"
                 aria-pressed={ui.viewMode === 'grid'}

@@ -71,8 +71,8 @@ export default function RecipeCard({ item, onSelect }) {
       >
         <div className="text-muted" style={{ fontSize: 12 }}>Actions</div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn ghost" aria-label="Save recipe">Save</button>
-          <button className="btn ghost" aria-label="Share recipe">Share</button>
+          <button className="btn ghost" aria-label="Save recipe" title="Save recipe">Save</button>
+          <button className="btn ghost" aria-label="Share recipe" title="Share recipe">Share</button>
         </div>
       </div>
     </article>

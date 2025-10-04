@@ -2,55 +2,133 @@ import React, { useEffect, useRef } from 'react';
 import Badge from '../common/Badge';
 
 /**
- * RecipeDetailModal: shows recipe details in a modal.
- * - Closes on Esc
- * - Focus management placeholder (focus trap to be added in later step)
+ * RecipeDetailModal: Accessible modal dialog for viewing recipe details.
+ * - ARIA: role="dialog", aria-modal, labelledby/ describedby
+ * - Focus: traps focus within modal, returns focus to trigger on close
+ * - Keyboard: Escape closes, Backdrop click closes
  */
+
+// Helper: get focusable elements within a container
+function getFocusable(container) {
+  if (!container) return [];
+  const selectors = [
+    'a[href]',
+    'area[href]',
+    'button:not([disabled])',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    'textarea:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])',
+    '[contenteditable="true"]',
+  ];
+  return Array.from(container.querySelectorAll(selectors.join(','))).filter(
+    (el) => !el.hasAttribute('disabled') && !el.getAttribute('aria-hidden')
+  );
+}
 
 // PUBLIC_INTERFACE
 export default function RecipeDetailModal({ open, recipe, onClose }) {
   const closeBtnRef = useRef(null);
+  const dialogRef = useRef(null);
+  const lastActiveRef = useRef(null);
 
-  // Close on escape key
+  // Capture last active element to restore focus after close
   useEffect(() => {
-    const handler = (e) => {
-      if (e.key === 'Escape' && open) onClose && onClose();
+    if (open) {
+      lastActiveRef.current = document.activeElement;
+    }
+  }, [open]);
+
+  // Close on escape key and trap focus within dialog
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose && onClose();
+        return;
+      }
+      if (e.key === 'Tab') {
+        const focusables = getFocusable(dialogRef.current);
+        if (focusables.length === 0) {
+          e.preventDefault();
+          return;
+        }
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first || !dialogRef.current.contains(document.activeElement)) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last || !dialogRef.current.contains(document.activeElement)) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
   }, [open, onClose]);
 
-  // Simple initial focus management
+  // Initial focus inside dialog
   useEffect(() => {
-    if (open && closeBtnRef.current) {
-      closeBtnRef.current.focus();
+    if (open) {
+      // setTimeout to ensure elements are in DOM
+      setTimeout(() => {
+        const target = closeBtnRef.current || getFocusable(dialogRef.current)[0];
+        target && target.focus();
+      }, 0);
+    }
+  }, [open]);
+
+  // Restore focus when closing
+  useEffect(() => {
+    if (!open && lastActiveRef.current && lastActiveRef.current.focus) {
+      setTimeout(() => {
+        try {
+          lastActiveRef.current.focus();
+        } catch {
+          /* ignore */
+        }
+      }, 0);
     }
   }, [open]);
 
   if (!open || !recipe) return null;
 
   const { title, image, time = 0, rating = 0, ingredients = [], steps = [] } = recipe;
+  const titleId = 'recipe-modal-title';
+  const descId = 'recipe-modal-desc';
 
   return (
     <div
       className={`modal-backdrop ${open ? 'open' : ''}`}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="recipe-modal-title"
+      aria-labelledby={titleId}
+      aria-describedby={descId}
       onClick={(e) => {
         // click outside to close
         if (e.target === e.currentTarget) onClose && onClose();
       }}
     >
-      <div className="modal" role="document">
+      <div className="modal" role="document" ref={dialogRef}>
         <header className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 id="recipe-modal-title" style={{ margin: 0 }}>{title}</h2>
-          <button ref={closeBtnRef} className="btn ghost" onClick={onClose} aria-label="Close recipe details">
+          <h2 id={titleId} style={{ margin: 0 }}>{title}</h2>
+          <button
+            ref={closeBtnRef}
+            className="btn ghost"
+            onClick={onClose}
+            aria-label="Close recipe details"
+          >
             Close
           </button>
         </header>
 
-        <div className="modal-body">
+        <div className="modal-body" id={descId}>
           <div style={{ position: 'relative', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginBottom: 16 }}>
             {image ? (
               <img src={image} alt={title} style={{ width: '100%', display: 'block' }} />
@@ -102,12 +180,10 @@ export default function RecipeDetailModal({ open, recipe, onClose }) {
         <footer className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="text-muted" style={{ fontSize: 12 }}>Actions</div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn ghost" aria-label="Save recipe">Save</button>
-            <button className="btn ghost" aria-label="Share recipe">Share</button>
+            <button className="btn" aria-label="Save recipe" title="Save recipe">Save</button>
+            <button className="btn ghost" aria-label="Share recipe" title="Share recipe">Share</button>
           </div>
         </footer>
-
-        {/* Focus trap placeholder: In a later step, implement roving tabindex or trap focus inside modal */}
       </div>
     </div>
   );

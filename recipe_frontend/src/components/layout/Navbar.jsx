@@ -22,7 +22,7 @@ export default function Navbar({ onSearchChange, rightActions }) {
   };
 
   return (
-    <header className="navbar u-shadow-sm" role="banner" aria-label="Top navigation">
+    <header className="navbar u-shadow-sm" role="banner" aria-label="Top navigation bar">
       <div className="brand">
         {/* Placeholder inline SVG logo to avoid external assets dependency */}
         <svg

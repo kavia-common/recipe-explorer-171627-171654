@@ -36,7 +36,7 @@ export default function SidebarFilters({ onFilterChange }) {
   };
 
   return (
-    <aside className="sidebar" aria-label="Filters">
+    <aside className="sidebar" aria-label="Filters sidebar">
       <div className="section">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3 style={{ margin: 0 }}>Filters</h3>
