@@ -1,13 +1,16 @@
+@import "./theme.css";
+@import "./styles/ocean.css";
+
+/* Base overrides kept minimal; detailed styles in ocean.css */
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  background: var(--color-bg);
+  color: var(--color-text);
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: var(--font-mono);
+  background: rgba(17, 24, 39, 0.04);
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
 }
