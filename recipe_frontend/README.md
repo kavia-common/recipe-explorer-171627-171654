@@ -1,104 +1,168 @@
-# Lightweight React Template for KAVIA
+# Recipe Explorer Frontend
 
-This project provides a minimal React template with a clean, modern UI and minimal dependencies.
+This React application provides a clean, modern interface for browsing, searching, and managing recipes. It uses a lightweight stack with vanilla CSS, a small state store, and a minimal API layer that can operate in mock mode or connect to a real backend via REST.
 
-## Features
+## Quick Start
 
-- **Lightweight**: No heavy UI frameworks - uses only vanilla CSS and React
-- **Modern UI**: Clean, responsive design with KAVIA brand styling
-- **Fast**: Minimal dependencies for quick loading times
-- **Simple**: Easy to understand and modify
+You can run the frontend with or without a backend. The app includes a safe mock mode so development is never blocked.
 
-## Getting Started
+- Run in development (mock mode by default if no backend configured):
+  1) npm install
+  2) npm start
+  3) Visit http://localhost:3000
+- Run against a real backend:
+  1) Create a .env file in this folder (see .env.example if present) and set:
+     REACT_APP_API_BASE_URL=https://your-backend.example.com
+  2) npm start
+  3) Mock mode will be off unless you explicitly force it on.
 
-In the project directory, you can run:
+Build and test commands:
+- npm test — launches the test runner
+- npm run build — builds the production bundle in build/
 
-### `npm start`
+## Environment Configuration
 
-Runs the app in development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+This project reads Create React App style environment variables and provides safe defaults.
 
-### `npm test`
-
-Launches the test runner in interactive watch mode.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-## Environment & Mock Mode
-
-The app includes a safe configuration layer that supports a mock API fallback to keep the UI usable even without a backend.
-
-Environment variables (Create React App format):
+Required/optional variables:
 - REACT_APP_API_BASE_URL
-  - Base URL of your backend API.
-  - If not set, the app automatically enables mock mode.
-  - Default used in code if missing: http://localhost:4000
+  - Where: put this in recipe_frontend/.env
+  - Purpose: base URL of your backend API (e.g., https://api.example.com or http://localhost:4000).
+  - Default behavior: if not set, mock mode is automatically enabled.
+  - Default code fallback: http://localhost:4000 (src/config.js).
 - REACT_APP_API_MOCK
-  - Optional override. Set to "true" to force mock mode even if a base URL is provided.
-  - Any other value is ignored.
+  - Where: put this in recipe_frontend/.env
+  - Purpose: optional override; set to "true" to force mock mode even when a base URL is provided.
+  - Any value other than the string "true" is ignored.
+
+Example .env:
+REACT_APP_API_BASE_URL=https://api.example.com
+# Force mock mode regardless of base URL (optional)
+# REACT_APP_API_MOCK=true
+
+Tip: If a .env.example file exists, copy it to .env and adjust values. If not, use the snippet above to create one.
+
+Where configuration is applied:
+- src/config.js — parses REACT_APP_API_BASE_URL and REACT_APP_API_MOCK and exports:
+  - apiBaseUrl: string
+  - isMockMode: boolean (true if REACT_APP_API_MOCK === "true" OR REACT_APP_API_BASE_URL is not set)
+  - isDev: boolean based on NODE_ENV
+
+## Mock Mode Behavior
+
+Mock mode keeps the UI usable even if a backend is unavailable. When enabled, API calls in src/api/recipes.js return deterministic in-app data and simulate small delays to mirror real network behavior. In development with mock mode on, DevBanner (src/components/common/DevBanner.jsx) displays a small, non-intrusive banner in the top-right corner to indicate that responses are mocked. The banner auto-dismisses after a few seconds and can be manually dismissed.
 
 How mock mode is determined:
-- Mock Mode is ON when REACT_APP_API_MOCK === "true" OR REACT_APP_API_BASE_URL is not set.
-- In development, a small non-intrusive banner appears in the top-right corner when mock mode is active.
+- ON when REACT_APP_API_MOCK === "true" OR when REACT_APP_API_BASE_URL is not set.
+- OFF when REACT_APP_API_BASE_URL is set and REACT_APP_API_MOCK is not "true".
 
-Examples:
-- Use real API:
-  - .env
-    REACT_APP_API_BASE_URL=https://api.example.com
-- Force mocks regardless of base URL:
-  - .env
-    REACT_APP_API_BASE_URL=https://api.example.com
-    REACT_APP_API_MOCK=true
-- Rely on default localhost base URL but still use mocks until you set the var:
-  - .env (empty or missing entries)
-    # No variables set — mock mode will be auto-enabled
+## API Endpoints and Payloads
 
-Tip: Copy .env.example to .env and set values as needed (create one if it doesn't exist).
+The API client is in src/api/client.js and reads the base URL from src/config.js. Recipes-specific calls live in src/api/recipes.js. In real mode, the following endpoints are called:
 
-## Customization
+- GET /recipes with query params
+  - Query parameters (all optional): search, tags, cuisine, time, difficulty, rating, page, pageSize.
+  - Expected response (either is acceptable; the client normalizes to an array):
+    1) Array form:
+       [
+         {
+           "id": 1,
+           "title": "Creamy Tomato Pasta",
+           "time": 25,
+           "rating": 4.3,
+           "cuisine": "Italian",
+           "tags": ["quick","pasta"],
+           "image": "https://...",
+           "ingredients": ["Pasta","Tomatoes","Cream","Garlic","Basil"],
+           "steps": ["Boil pasta","Cook sauce","Combine and serve"]
+         }
+       ]
+    2) Object form:
+       {
+         "items": [ { ...same as above... } ],
+         "page": 1,
+         "pageSize": 20,
+         "total": 100
+       }
 
-### Colors
+- GET /recipes/:id
+  - Path parameter: :id (string or number)
+  - Expected response: a single recipe object:
+    {
+      "id": 2,
+      "title": "Avocado Toast Deluxe",
+      "time": 10,
+      "rating": 4.8,
+      "cuisine": "American",
+      "tags": ["breakfast","quick"],
+      "image": "https://...",
+      "ingredients": ["Bread","Avocado","Lemon","Chili flakes"],
+      "steps": ["Toast bread","Mash avocado","Assemble"]
+    }
 
-The main brand tokens are defined as CSS variables in `src/theme.css` and `src/styles/ocean.css`.
+- POST /recipes/:id/save (mock-only convenience; real backend should provide explicit create/update endpoints)
+  - Note: In real mode, the code does not call this endpoint; see saveRecipe below for real-mode behavior.
+  - In mock mode, saveRecipe mutates in-memory data and returns the saved object.
 
-### Components
+- POST /recipes (create) and PUT /recipes/:id (update)
+  - These are called by saveRecipe in real mode:
+    - Create (no id): POST /recipes with body containing the recipe fields
+    - Update (with id): PUT /recipes/:id with body containing the updated recipe fields
+  - Expected response: the saved recipe object returned from the backend
 
-This template uses pure HTML/CSS components instead of a UI framework. You can find component styles primarily in `src/styles/ocean.css`.
+- GET /tags
+  - Expected response:
+    ["quick","pasta","breakfast","comfort"]
 
-Common components include:
-- Buttons (`.btn`, `.btn.ghost`)
-- Container (`.container`)
-- Navigation (`.navbar`)
-- Grid helpers (`.grid.cols-1`, `.grid.cols-3`)
-- Modal (`.modal`, `.modal-backdrop`)
+- GET /cuisines
+  - Expected response:
+    ["Italian","American","Mediterranean"]
 
-## Learn More
+Notes:
+- The client adds query parameters only when values are present and supports arrays by appending multiple values with the same key.
+- Responses should use application/json content type. Non-2xx responses will throw an Error with status and details.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Project Structure
 
-### Code Splitting
+The key folders for extending the app are:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+- src/components — UI components for layout, recipes, and small primitives
+  - layout/Navbar.jsx — top navigation with search
+  - layout/SidebarFilters.jsx — collapsible filters panel
+  - recipes/* — RecipeCard, RecipesGrid, RecipesList, RecipeDetailModal
+  - common/* — DevBanner, Spinner, Badge, a11y helpers
+- src/store — lightweight state containers
+  - uiState.js — search, filters, view mode, and modal state with debounced search
+  - recipesState.js — recipes list, loading/error state, and selected recipe
+- src/api — small API layer
+  - client.js — base fetch wrapper including base URL and query serialization
+  - recipes.js — listRecipes, getRecipe, saveRecipe, listTags, listCuisines
+- src/styles — Ocean Professional theme styles
+  - ocean.css — primary CSS including layout scaffolding and components
+- src/assets — local assets (images and icons)
+- src/config.js — environment parsing and feature flags (apiBaseUrl, isMockMode, isDev)
 
-### Analyzing the Bundle Size
+To adjust the API base URL or mock behavior, edit recipe_frontend/.env or update src/config.js if you need different defaults.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## Styling (Ocean Professional theme) and a11y notes
 
-### Making a Progressive Web App
+The UI follows a modern Ocean Professional theme: blue primary and amber secondary accents, rounded corners, subtle shadows, and minimalist surfaces. Theme tokens are defined in src/theme.css and applied in src/styles/ocean.css. Components rely on semantic HTML and ARIA attributes for accessibility. For example, the modal dialog sets role="dialog" with aria-modal and labeled/ described elements; keyboard interaction includes ESC to close and focus trapping. The Navbar search uses role="search" and accessible labels, while list and grid toggles indicate pressed state. See src/components/common/README-a11y.md for additional patterns and tips.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## Running With and Without a Backend
 
-### Advanced Configuration
+- Without backend (mock mode):
+  - Leave REACT_APP_API_BASE_URL unset, or set REACT_APP_API_MOCK=true in .env.
+  - Start with npm start.
+  - In development, DevBanner appears briefly to indicate that mock mode is active.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+- With backend:
+  - Set REACT_APP_API_BASE_URL in .env to your API host, e.g.:
+    REACT_APP_API_BASE_URL=http://localhost:4000
+  - Ensure your backend implements the endpoints listed above.
+  - Start with npm start and the app will call the backend instead of mocks.
 
-### Deployment
+## Next Steps for Backend Integration
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+When your backend is ready, remove or phase out mock mode by providing a valid REACT_APP_API_BASE_URL and ensuring your endpoints conform to the expected shapes above. For create/update, the frontend issues POST /recipes and PUT /recipes/:id in real mode; implement those routes server-side and return the saved recipe object. You can safely leave mock mode logic in place during development and disable it per environment using .env. Once the backend is stable, you may optionally remove mock branches from src/api/recipes.js to simplify the code path.
 
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+For deeper API details, see README-API.md in this folder, which summarizes the API layer and setup instructions.
